@@ -9,8 +9,6 @@ export class AuthDemo extends LitElement {
       files: {type: Array},
       accessToken: {type: String},
       tokenExpiresAt: {type: Number},
-      docsHint: {type: String},
-      count: {type: Number},
     }
   }
 
@@ -20,8 +18,6 @@ export class AuthDemo extends LitElement {
     this.files = []
     this.accessToken = null
     this.tokenExpiresAt = 0
-    this.docsHint = 'Click on the Vite and Lit logos to learn more'
-    this.count = 0
   }
 
   errorMessage() {
@@ -35,7 +31,9 @@ export class AuthDemo extends LitElement {
       return html`
         <div class="files">
           <h3>Files</h3>
-          ${this.files.map(file => html`<div class="file">${file.name}</div>`)}
+          <ul>
+            ${this.files.map(file => html`<li class="file">${file.name}</li>`)}
+          </ul>
         </div>
       `
     }
@@ -45,27 +43,19 @@ export class AuthDemo extends LitElement {
     return html`
       <div class="root">
         ${this.errorMessage()}
-        <button @click=${this._onClick} part="button">
-          count is ${this.count}
-        </button>
         <button @click=${this._fetchFiles} part="button">
           Fetch files
         </button>
         ${this.filesTemplate()}
       </div>
-      <p class="read-the-docs">${this.docsHint}</p>
     `
-  }
-
-  _onClick() {
-    this.count++
   }
 
   async _fetchFiles() {
     if (!this.accessToken || this.tokenExpiresAt < Date.now()) {
       await this._requestAuthorization();
     }
-    await _fetchFileList();
+    await this._fetchFileList();
   }
 
   /** 
