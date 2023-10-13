@@ -62,6 +62,9 @@ export class AuthDemo extends LitElement {
         <button @click=${this._fetchFiles} part="button">
           Fetch files
         </button>
+        <button @click=${this._revoke} part="button">
+          Revoke access
+        </button>
         ${this.filesTemplate()}
       </div>
     `
@@ -69,9 +72,15 @@ export class AuthDemo extends LitElement {
 
   async _fetchFiles() {
     if (!this.accessToken || this.tokenExpiresAt < Date.now()) {
-      await this._requestAuthorization();
+      await this._requestAuthorization()
     }
-    await this._fetchFileList();
+    await this._fetchFileList()
+  }
+
+  async _revoke() {
+    return new Promise((resolve, reject) => {
+      google.accounts.oauth2.revoke(this.accessToken, done => resolve(done))
+    })
   }
 
   /** 
@@ -87,51 +96,56 @@ export class AuthDemo extends LitElement {
           if (response
             && response.access_token
             && google.accounts.oauth2.hasGrantedAnyScope(response, scope)) {
-            this.error = null;
-            this.accessToken = response.access_token;
+            this.error = null
+            this.accessToken = response.access_token
             // Expiry is returned as a relative time (number of seconds remaining)
             // Convert to absolute time
-            this.tokenExpiresAt = Date.now() + (response.expires_in * 1000);
-            resolve(this.accessToken);
-            return;
+            this.tokenExpiresAt = Date.now() + (response.expires_in * 1000)
+            resolve(this.accessToken)
+            return
           }
           // Either error or scope not granted
-          this.error = 'Authorization required.';
+          this.error = 'Authorization required.'
         },
         error_callback: (err) => {
           if (err.type === 'popup_closed') {
             // User closed popup without authorizing.
-            this.error = 'Authorization required';
+            this.error = 'Authorization required'
           } else {
             // Popup failed to open or some other unexpected error occurred.
-            this.error = 'An unexpected error occurred';
+            this.error = 'An unexpected error occurred'
           }
-          reject(err);
+          reject(err)
         }
-      });
-      client.requestAccessToken();
-    });
+      })
+      client.requestAccessToken()
+    })
   }
 
   async _fetchFileList() {
     const params = new URLSearchParams({
       orderBy: 'modifiedTime desc',
       pageSize: '10'
-    });
+    })
     const res = await fetch(`https://www.googleapis.com/drive/v3/files?${params}`, {
       headers: {
         'Authorization': `Bearer ${this.accessToken}`
       }
-    });
+    })
     if (res.status >= 400) {
       this.error = 'Unable to fetch files'
     }
-    const body = await res.json();
-    this.files = body.files;
+    const body = await res.json()
+    this.files = body.files
   }
 
   static get styles() {
     return css`
+      .error {
+        border: #ef4444;
+        background-color: #fca5a5;
+        padding: 12px;
+      }
     `
   }
 }
