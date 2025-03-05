@@ -18,6 +18,13 @@ import {LitElement, css, html} from 'lit'
 
 const CLIENT_ID = import.meta.env.VITE_CLIENT_ID
 
+if (!CLIENT_ID) {
+  throw new Error('VITE_CLIENT_ID is not defined in .env file')
+}
+if (CLIENT_ID.length == 0) {
+  throw new Error('VITE_CLIENT_ID is not defined')
+}
+
 export class AuthDemo extends LitElement {
   static get properties() {
     return {
@@ -79,7 +86,9 @@ export class AuthDemo extends LitElement {
 
   async _revoke() {
     return new Promise((resolve, reject) => {
-      google.accounts.oauth2.revoke(this.accessToken, done => resolve(done))
+      google.accounts.oauth2.revoke(this.accessToken, () => {
+        resolve(true)
+      })
     })
   }
 
@@ -102,7 +111,6 @@ export class AuthDemo extends LitElement {
             // Convert to absolute time
             this.tokenExpiresAt = Date.now() + (response.expires_in * 1000)
             resolve(this.accessToken)
-            return
           }
           // Either error or scope not granted
           this.error = 'Authorization required.'
@@ -111,11 +119,12 @@ export class AuthDemo extends LitElement {
           if (err.type === 'popup_closed') {
             // User closed popup without authorizing.
             this.error = 'Authorization required'
+            reject(err)
           } else {
             // Popup failed to open or some other unexpected error occurred.
             this.error = 'An unexpected error occurred'
+            reject(err)
           }
-          reject(err)
         }
       })
       client.requestAccessToken()
